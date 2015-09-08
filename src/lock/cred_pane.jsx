@@ -30,19 +30,17 @@ export default class CredPane extends React.Component {
     return (
       <div className={className + " auth0-lock-cred-pane"}>
         <Header name={name} backgroundUrl={backgroundUrl} logoUrl={icon}/>
-        <div ref="container">
-          <ReactTransitionGroup>
-            <Placeholder dimensions={dimensions}>
-              <ReactTransitionGroup>
-                {globalError && <GlobalError key="global-error" message={globalError} />}
-              </ReactTransitionGroup>
-              <div className="auth0-lock-content">
-                {this.props.children}
-              </div>
-              {l.ui.terms(lock) && <Terms content={l.ui.terms(lock)} />}
-            </Placeholder>
-          </ReactTransitionGroup>
-        </div>
+        <ReactTransitionGroup>
+          <Placeholder dimensions={dimensions}>
+            <ReactTransitionGroup>
+              {globalError && <GlobalError key="global-error" message={globalError} />}
+            </ReactTransitionGroup>
+            <div className="auth0-lock-content">
+              {this.props.children}
+            </div>
+            {l.ui.terms(lock) && <Terms content={l.ui.terms(lock)} />}
+          </Placeholder>
+        </ReactTransitionGroup>
         <SubmitButton disabled={disableSubmit} />
         <ReactCSSTransitionGroup transitionName="slide">
           {auxiliaryPane}
@@ -63,24 +61,24 @@ class Placeholder extends React.Component {
   }
 
   componentWillAppear(callback) {
-    const dimensions = this.props.dimensions;
+    const { dimensions } = this.props;
     const node = React.findDOMNode(this);
-    var computedStyle = window.getComputedStyle(node, null);
-    var height = computedStyle.height;
+    const height = window.getComputedStyle(node, null).height;
     const prevHeight = dimensions("credPane");
     if (!prevHeight) {
       dimensions("credPane", height);
       return;
     }
 
+    this.setState({show: false});
     node.style.height = prevHeight;
-    setTimeout(function() {
+
+    setTimeout(() => {
+      this.setState({show: true})
       node.style.transition = "all 0.4s 0.8s";
       node.style.height = height;
       dimensions("credPane", height);
-    }, 17);
-    this.setState({show: false});
-    setTimeout(() => this.setState({show: true}), 800);
-    callback();
+      callback();
+    }, 800);
   }
 }
