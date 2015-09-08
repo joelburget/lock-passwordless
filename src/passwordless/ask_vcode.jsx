@@ -7,9 +7,9 @@ import * as c from '../cred/index';
 
 export default class AskVcode extends React.Component {
   render() {
-    const { className, cred, lock } = this.props;
+    const { className, cred, dimensions, lock } = this.props;
     return (
-      <CredPane lock={lock} className={className}>
+      <CredPane lock={lock} dimensions={dimensions} className={className}>
         <div className="auth0-lock-form auth0-lock-passwordless">
           <h2>Enter the code</h2>
           <p>

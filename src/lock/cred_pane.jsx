@@ -9,11 +9,9 @@ import Terms from '../lock/terms';
 const ReactTransitionGroup = React.addons.TransitionGroup;
 const ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
 
-let prevHeight;
-
 export default class CredPane extends React.Component {
   render() {
-    const { auxiliaryPane, className, lock } = this.props;
+    const { auxiliaryPane, className, dimensions, lock } = this.props;
 
     const gravatar = l.gravatar(lock);
     const icon = l.ui.icon(lock);
@@ -34,7 +32,7 @@ export default class CredPane extends React.Component {
         <Header name={name} backgroundUrl={backgroundUrl} logoUrl={icon}/>
         <div ref="container">
           <ReactTransitionGroup>
-            <Placeholder>
+            <Placeholder dimensions={dimensions}>
               <ReactTransitionGroup>
                 {globalError && <GlobalError key="global-error" message={globalError} />}
               </ReactTransitionGroup>
@@ -65,21 +63,21 @@ class Placeholder extends React.Component {
   }
 
   componentWillAppear(callback) {
+    const dimensions = this.props.dimensions;
     const node = React.findDOMNode(this);
     var computedStyle = window.getComputedStyle(node, null);
     var height = computedStyle.height;
+    const prevHeight = dimensions("credPane");
     if (!prevHeight) {
-      prevHeight = height;
-      return
+      dimensions("credPane", height);
+      return;
     }
 
-    var paddingTop = computedStyle.paddingTop;
-    var paddingBottom = computedStyle.paddingBottom;
     node.style.height = prevHeight;
     setTimeout(function() {
       node.style.transition = "all 0.4s 0.8s";
       node.style.height = height;
-      prevHeight = height;
+      dimensions("credPane", height);
     }, 17);
     this.setState({show: false});
     setTimeout(() => this.setState({show: true}), 800);
