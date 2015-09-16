@@ -96,6 +96,10 @@ module.exports = function(grunt) {
           {expand: true, flatten: true, src: "build/*", dest: "release/", rename: rename_release(minor_version)},
           {expand: true, flatten: true, src: "build/*", dest: "release/", rename: rename_release(major_version)}
         ]
+      },
+      heroku_design: {
+        src: "build/lock-passwordless.design.js",
+        dest: "support/design/lock-passwordless.design.js"
       }
     },
     env: {
@@ -149,6 +153,7 @@ module.exports = function(grunt) {
   grunt.registerTask("build", ["clean:build", "env:build", "browserify:build", "uglify:build"]);
   grunt.registerTask("dev", ["clean:dev", "connect:dev", "browserify:dev", "watch"]);
   grunt.registerTask("design", ["clean:dev", "connect:dev", "browserify:design", "watch"]);
+  grunt.registerTask("heroku_design", ["clean:dev", "browserify:design", "copy:heroku_design"]);
   grunt.registerTask("purge_cdn", ["http:purge_js", "http:purge_js_min", "http:purge_major_js", "http:purge_major_js_min", "http:purge_minor_js", "http:purge_minor_js_min"]);
   grunt.registerTask("cdn", ["build", "copy:release", "aws_s3:clean", "aws_s3:publish", "purge_cdn"]);
 

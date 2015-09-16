@@ -44,8 +44,9 @@
     ]
   },
   "scripts": {
-    "start": "grunt dev",
+    "start": "serve support/design --port $PORT",
     "build": "grunt build",
+    "build:heroku_design": "grunt heroku_design",
     "design": "grunt design",
     "test": "zuul -- test/*/*.test.js",
     "test:browser": "zuul --local 8080 --disable-tunnel -- test/*/*.test.js",
@@ -82,6 +83,7 @@
     "immutable": "^3.7.3",
     "jsonp": "^0.2.0",
     "react": "^0.13.3",
+    "serve": "*",
     "trim": "0.0.1"
   }
 }
