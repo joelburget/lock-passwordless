@@ -3,18 +3,40 @@ import InputWrap from './input_wrap';
 import Icon from '../icon/icon';
 
 export default class PhoneNumberInput extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {};
+  }
+
   render() {
     const { isValid, ...props } = this.props;
+    const { focused } = this.state;
 
     return (
-      <InputWrap name="phone-number" isValid={isValid} icon={<Icon name="phoneNumber" />}>
-        <input type="text"
+      <InputWrap name="phone-number" isValid={isValid} icon={<Icon name="phoneNumber" />} focused={focused}>
+        <input ref="input"
+          type="text"
           name="phoneNumber"
           className="auth0-lock-input auth0-lock-input-number"
-          placeholder="your phone number"
+          autoComplete="off"
+          onFocus={::this.handleFocus}
+          onBlur={::this.handleBlur}
           {...props} />
       </InputWrap>
     );
+  }
+
+  focus() {
+    React.findDOMNode(this.refs.input).focus();
+    this.handleFocus();
+  }
+
+  handleFocus() {
+    this.setState({focused: true});
+  }
+
+  handleBlur() {
+    this.setState({focused: false});
   }
 }
 

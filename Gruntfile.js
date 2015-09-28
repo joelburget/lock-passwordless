@@ -84,7 +84,7 @@ module.exports = function(grunt) {
       dev: {
         options: {
           hostname: "*",
-          base: [".", "build", "support"],
+          base: [".", "build", "support", "support/playground"],
           port: 3000
         }
       },
@@ -100,6 +100,11 @@ module.exports = function(grunt) {
       heroku_design: {
         src: "build/lock-passwordless.design.js",
         dest: "support/design/lock-passwordless.design.js"
+      },
+      pages: {
+        files: [
+          {expand: true, flatten: true, src: "build/*", dest: "support/playground/build/"},
+        ]
       }
     },
     env: {
@@ -156,5 +161,5 @@ module.exports = function(grunt) {
   grunt.registerTask("heroku_design", ["clean:dev", "browserify:design", "copy:heroku_design"]);
   grunt.registerTask("purge_cdn", ["http:purge_js", "http:purge_js_min", "http:purge_major_js", "http:purge_major_js_min", "http:purge_minor_js", "http:purge_minor_js_min"]);
   grunt.registerTask("cdn", ["build", "copy:release", "aws_s3:clean", "aws_s3:publish", "purge_cdn"]);
-
+  grunt.registerTask("ghpages", ["build", "copy:pages"]); // add publish task
 };

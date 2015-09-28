@@ -1,16 +1,16 @@
 import RenderScheduler from './lock/render_scheduler';
 import Renderer from './lock/renderer';
 import PluginManager from './lock/plugin_manager';
-import IDUtils from './utils/id_utils';
-import { setupLock } from './lock/actions';
+import * as idu from './utils/id_utils';
+import { setupLock, updateLock } from './lock/actions';
+import { requestGravatar } from './gravatar/actions';
 import webAPI from './lock/web_api';
 // import crashedSpec from '../crashed/mode_spec';
 import passwordlessSpec from './passwordless/mode_spec';
 
 // styles
 import styles from '../css/index.css';
-import transitions from '../css/transitions.css';
-import overwrites from '../css/overwrites.css';
+// import transitions from '../css/transitions.css';
 
 // telemetry
 import version from 'package.version';
@@ -25,7 +25,7 @@ export default class Auth0LockPasswordless {
       throw new Error("A `domain` string must be provided as second argument.");
     }
 
-    this.id = IDUtils.random();
+    this.id = idu.incremental();
     setupLock(this.id, clientID, domain);
   }
 
@@ -34,9 +34,24 @@ export default class Auth0LockPasswordless {
     f(this.id, true);
   }
 
+  getProfile(token, cb) {
+    return webAPI.getProfile(this.id, token, cb);
+  }
+
+  parseHash(hash) {
+    return webAPI.parseHash(this.id, hash);
+  }
+
   logout(query = {}) {
-    // TODO: create action
     webAPI.signOut(this.id, query);
+  }
+
+  update(f) {
+    return updateLock(this.id, f);
+  }
+
+  requestGravatar(email) {
+    return requestGravatar(email);
   }
 }
 

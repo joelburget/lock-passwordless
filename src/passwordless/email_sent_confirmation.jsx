@@ -1,7 +1,8 @@
 import React from 'react';
 import ConfirmationPane from '../lock/confirmation_pane';
-import { resendEmail, reset } from './actions';
+import { close, resendEmail, reset } from './actions';
 import * as l from '../lock/index';
+import * as c from '../cred/index';
 import * as m from './index';
 
 
@@ -14,11 +15,10 @@ class RetryIcon extends React.Component {
 
 class ResendLink extends React.Component {
   render() {
-    const { retry, onClick } = this.props;
-    const message = retry ? "Retry" : "Resend";
+    const { label, onClick } = this.props;
     return(
       <a className="auth0-lock-resend-link" href="" onClick={onClick}>
-        {message} <RetryIcon />
+        {label} <RetryIcon />
       </a>
     );
   }
@@ -29,16 +29,17 @@ class Resend extends React.Component {
     const { lock } = this.props;
 
     const resendLink = m.resendAvailable(lock) &&
-      <ResendLink retry={m.resendFailed(lock)} onClick={::this.handleClick} />;
+      <ResendLink onClick={::this.handleClick}
+        label={this.t([m.resendFailed(lock) ? "retryLabel" : "resendLabel"])} />;
 
     const resendingLabel = m.resendOngoing(lock) &&
-      <a className="auth0-lock-resend-link">resending...</a>;
+      <a className="auth0-lock-resend-link">{this.t(["resendingLabel"])}</a>;
 
     const resendSuccessLabel = m.resendSuccess(lock) &&
-      <span className="auth0-lock-sent-label">Sent!</span>;
+      <span className="auth0-lock-sent-label">{this.t(["sentLabel"])}</span>;
 
     const resendFailedLabel = m.resendFailed(lock) &&
-      <span className="auth0-lock-sent-failed-label">Failed!</span>;
+      <span className="auth0-lock-sent-failed-label">{this.t(["failedLabel"])}</span>;
 
     return (
       <span>
@@ -54,20 +55,34 @@ class Resend extends React.Component {
     e.preventDefault();
     resendEmail(l.id(this.props.lock));
   }
+
+  t(keyPath, params) {
+    return l.ui.t(this.props.lock, ["confirmation"].concat(keyPath), params);
+  }
 }
 
 export default class EmailSentConfirmation extends React.Component {
   render() {
     const { lock } = this.props;
+    const closeHandler = l.ui.closable(lock) ? ::this.handleClose : undefined;
+
     return (
-      <ConfirmationPane backHandler={::this.handleBack}>
-        <p>We sent you a link to sign in.<br />Please check your inbox.</p>
+      <ConfirmationPane backHandler={::this.handleBack} closeHandler={closeHandler}>
+        <p>{this.t(["success"], {email: c.email(lock)})}</p>
         <Resend lock={lock}/>
       </ConfirmationPane>
     )
   }
 
   handleBack() {
-    reset(l.id(this.props.lock), false);
+    reset(l.id(this.props.lock), {clearCred: []});
+  }
+
+  handleClose() {
+    close(l.id(this.props.lock));
+  }
+
+  t(keyPath, params) {
+    return l.ui.t(this.props.lock, ["confirmation"].concat(keyPath), params);
   }
 }

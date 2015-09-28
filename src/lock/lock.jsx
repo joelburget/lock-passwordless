@@ -12,7 +12,7 @@ import EscKeydownUtils from '../utils/esc_keydown_utils';
 
 export default class Lock extends React.Component {
   componentDidMount() {
-    this.escKeydown = new EscKeydownUtils(() => this.handleClose());
+    this.escKeydown = new EscKeydownUtils(() => this.handleEsc());
   }
 
   componentWillUnmount() {
@@ -53,10 +53,10 @@ export default class Lock extends React.Component {
             <div className="auth0-lock-widget-container">
               <MultisizeSlide delay={400} transitionName="horizontal-fade">{children}</MultisizeSlide>
             </div>
-            <span className="auth0-lock-badge-bottom">
-              <Badge />
-            </span>
           </form>
+          <span className="auth0-lock-badge-bottom">
+            <Badge />
+          </span>
         </div>
       </div>
     );
@@ -73,6 +73,11 @@ export default class Lock extends React.Component {
   handleClose() {
     const { closeHandler, lock } = this.props;
     closeHandler(l.id(lock));
+  }
+
+  handleEsc() {
+    const { closeHandler, escHandler, lock } = this.props;
+    escHandler ? escHandler(l.id(lock)) : this.handleClose();
   }
 }
 

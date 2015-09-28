@@ -44,7 +44,7 @@ describe(".sms acceptance", function() {
     });
 
     it("displays an input with for the location with a default value", function() {
-      expect(u.qInputValue(this.lock, "location")).to.be("United States +1");
+      expect(u.qInputValue(this.lock, "location")).to.be("+1 United States");
     });
   });
 
@@ -98,7 +98,7 @@ describe(".sms acceptance", function() {
 
     describe("when entering a few letters that match a few locations", function() {
       before(function() {
-        u.filterLocations(this.lock, "au");
+        u.filterLocations(this.lock, "united");
       });
 
       it("shows that locations", function() {
@@ -150,7 +150,7 @@ describe(".sms acceptance", function() {
       });
 
       it("starts the passwordless flow with the given location", function() {
-        const params = {phoneNumber: "+340303456",};
+        const params = {phoneNumber: "+340303456"};
         expect(u.hasStartedPasswordless(params)).to.be.ok();
       });
     });
@@ -280,7 +280,7 @@ describe(".sms acceptance", function() {
 
     describe("when response arrives", function() {
       before(function() {
-        u.simulateStartPasswordlessResponse({});
+        u.simulateStartPasswordlessResponse({error: "unknown"});
       });
 
       it("hides the loading indicator", function() {
@@ -300,7 +300,8 @@ describe(".sms acceptance", function() {
       });
 
       it("shows a generic error", function() {
-        expect(u.isSomethingWrong(this.lock, u.SMS_GENERIC_ERROR)).to.be.ok();
+        const errorMessage = "We're sorry, something went wrong when sending the SMS";
+        expect(u.isSomethingWrong(this.lock, errorMessage)).to.be.ok();
       });
     });
   });
@@ -382,7 +383,7 @@ describe(".sms acceptance", function() {
     });
 
     it("attempts to sign in with the entered cred", function() {
-      expect(u.hasSignedInWith("+10303456", "1234")).to.be.ok();
+      expect(u.hasSignedInWith({phoneNumber: "+10303456", passcode: "1234"})).to.be.ok();
     })
 
     describe("when response arrives", function() {
@@ -435,12 +436,12 @@ describe(".sms acceptance", function() {
     });
 
     it("attempts to sign in with the entered cred", function() {
-      expect(u.hasSignedInWith("+10303456", "1234")).to.be.ok();
+      expect(u.hasSignedInWith({phoneNumber: "+10303456", passcode: "1234"})).to.be.ok();
     })
 
     describe("when response arrives", function() {
       before(function() {
-        this.error = {description: "invalid email or vcode"};
+        this.error = {error: "invalid_user_password"};
         u.simulateSingInResponse(this.error);
       });
 
@@ -462,7 +463,7 @@ describe(".sms acceptance", function() {
       });
 
       it("shows the received error description", function() {
-        expect(u.isSomethingWrong(this.lock, this.error.description)).to.be.ok();
+        expect(u.isSomethingWrong(this.lock, "Wrong phone number or verification code")).to.be.ok();
       });
     });
   });

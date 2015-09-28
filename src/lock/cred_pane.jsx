@@ -20,7 +20,7 @@ export default class CredPane extends React.Component {
   }
 
   render() {
-    const { auxiliaryPane, backHandler, className, lock, showTerms } = this.props;
+    const { auxiliaryPane, backHandler, className, lock, terms } = this.props;
     const { height, show } = this.state;
 
     const gravatar = l.gravatar(lock);
@@ -31,15 +31,16 @@ export default class CredPane extends React.Component {
     let backgroundUrl, name;
     if (gravatar) {
       backgroundUrl = g.imageUrl(gravatar);
-      name = g.displayName(gravatar);
+      name = this.t(["welcome"], {name: g.displayName(gravatar)});
     } else {
       backgroundUrl = icon;
       name = "";
     }
+    const primaryColor = l.ui.primaryColor(lock);
 
     return (
       <div className={className + " auth0-lock-cred-pane"}>
-        <Header name={name} backHandler={backHandler && show && ::this.handleBack} backgroundUrl={backgroundUrl} logoUrl={icon}/>
+        <Header title={this.t(["title"])} name={name} backHandler={backHandler && show && ::this.handleBack} backgroundUrl={backgroundUrl} backgroundColor={primaryColor} logoUrl={icon}/>
         <Placeholder delay={800} height={height} show={show} ref="content">
           <ReactTransitionGroup>
             {globalError && <GlobalError key="global-error" message={globalError} />}
@@ -47,14 +48,18 @@ export default class CredPane extends React.Component {
           <div className="auth0-lock-content">
             {this.props.children}
           </div>
-          {l.ui.terms(lock) && <Terms content={l.ui.terms(lock)} />}
+          {terms && <Terms>{terms}</Terms>}
         </Placeholder>
-        <SubmitButton disabled={disableSubmit} />
+        <SubmitButton ref="submit" color={primaryColor} disabled={disableSubmit} tabIndex={l.tabIndex(lock, 10)} />
         <ReactCSSTransitionGroup transitionName="slide">
           {auxiliaryPane}
         </ReactCSSTransitionGroup>
       </div>
     );
+  }
+
+  focusSubmit() {
+    this.refs.submit.focus();
   }
 
   handleBack() {
@@ -78,16 +83,28 @@ export default class CredPane extends React.Component {
     const size = window.getComputedStyle(node, null).height;
     callback({height: size, reverse: this.reverse});
   }
+
+  t(keyPath, params) {
+    return l.ui.t(this.props.lock, keyPath, params);
+  }
 }
 
 class Placeholder extends React.Component {
   render() {
     const { children, delay, height, show } = this.props;
+    const transition = `height ${delay}ms`;
     const style = {
       height: height,
-      transition: `height ${delay}ms`
+      transition: transition,
+      "WebkitTransition": transition
     };
 
-    return <div style={style}>{show && children}</div>;
+    return (
+      <div style={style}>
+        <div style={{display: show ? "block" : "none"}}>
+          {children}
+        </div>
+      </div>
+    );
   }
 }

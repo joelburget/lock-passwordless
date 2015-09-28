@@ -1,8 +1,10 @@
+import { Map } from 'immutable';
 import { read, getEntity, swap, updateEntity } from '../store/index';
 import { closeLock } from '../lock/actions';
 import webApi from '../lock/web_api';
 import * as c from '../cred/index';
 import * as cc from '../cred/country_codes';
+import * as cs from '../cred/storage';
 import * as l from '../lock/index';
 import * as m from './index';
 
@@ -19,18 +21,12 @@ export function changePhoneLocation(id, location) {
 }
 
 export function setDefaultLocation(id, str) {
-  let [dialingCode, ...countryParts] = str.split(" ");
-  const result = cc.find(dialingCode, countryParts.join(" "));
-
-  if (result.size === 0) {
-    throw new Error(`Unable to set the default location, can't find any that matches "${str}".`);
+  const result = cc.findByIsoCode(str);
+  if (!result) {
+    throw new Error(`Unable to set the default location, can't find any country with the code "${str}".`);
   }
 
-  if (result.size > 1) {
-    throw new Error(`Unable to set the default location, multiple locations match "${str}". Try appending the country name.`);
-  }
-
-  swap(updateEntity, "lock", id, c.setPhoneLocation, result.get(0));
+  swap(updateEntity, "lock", id, c.setPhoneLocation, result);
 }
 
 export function changeEmail(id, email) {
@@ -43,6 +39,10 @@ export function changeVcode(id, vcode) {
 
 export function selectPhoneLocation(id) {
   swap(updateEntity, "lock", id, m.setSelectingLocation, true);
+}
+
+export function cancelSelectPhoneLocation(id) {
+  swap(updateEntity, "lock", id, m.setSelectingLocation, false);
 }
 
 export function requestPasswordlessEmail(id) {
@@ -58,7 +58,16 @@ export function requestPasswordlessEmail(id) {
   const lock = read(getEntity, "lock", id);
 
   if (l.submitting(lock)) {
-    const options = {email: c.email(lock), send: m.send(lock)};
+    const isMagicLink = m.send(lock) === "link";
+    const options = {
+      authParams: isMagicLink ? l.login.authParams(lock).toJS() : {},
+      callbackURL: l.login.callbackURL(lock),
+      forceJSONP: l.login.forceJSONP(lock),
+      email: c.email(lock),
+      send: m.send(lock),
+      responseType: l.login.responseType(lock)
+    };
+
     webApi.startPasswordless(id, options, error => {
       if (error) {
         requestPasswordlessEmailError(id, error);
@@ -74,15 +83,16 @@ export function requestPasswordlessEmailSuccess(id) {
     return m.setPasswordlessStarted(l.setSubmitting(lock, false), true);
   });
   const lock = read(getEntity, "lock", id);
+  cs.store(lock, "email", l.modeOptions(lock).get("storageKey"));
   if (m.send(lock) === "link") {
     l.invokeDoneCallback(lock, null, c.email(lock));
   }
 }
 
 export function requestPasswordlessEmailError(id, error) {
-  const fallbackDescription = "We're sorry, something went wrong when sending the email.";
-  swap(updateEntity, "lock", id, l.setSubmitting, false, error.description || fallbackDescription);
   const lock = read(getEntity, "lock", id);
+  const errorMessage = l.ui.t(lock, ["error", "passwordless", error.error], {medium: "email", __textOnly: true}) || l.ui.t(lock, ["error", "passwordless", "lock.request"], {medium: "email", __textOnly: true})
+  swap(updateEntity, "lock", id, l.setSubmitting, false, errorMessage);
   if (m.send(lock) === "link") {
     l.invokeDoneCallback(lock, error);
   }
@@ -91,6 +101,7 @@ export function requestPasswordlessEmailError(id, error) {
 export function sendSMS(id) {
   // TODO: abstract this submit thing.
   swap(updateEntity, "lock", id, lock => {
+
     if (c.validPhoneNumber(lock)) {
       return l.setSubmitting(lock, true);
     } else {
@@ -118,18 +129,29 @@ export function sendSMSSuccess(id) {
     lock = m.setPasswordlessStarted(lock, true);
     return lock;
   });
+
+  const lock = read(getEntity, "lock", id);
+  cs.store(lock, "phoneNumber", l.modeOptions(lock).get("storageKey"));
 }
 
 export function sendSMSError(id, error) {
-  const fallbackDescription = "We're sorry, something went wrong when sending the SMS.";
-  swap(updateEntity, "lock", id, l.setSubmitting, false, error.description || fallbackDescription);
+  const lock = read(getEntity, "lock", id);
+  const errorMessage = l.ui.t(lock, ["error", "passwordless", error.error], {medium: "SMS", __textOnly: true}) || l.ui.t(lock, ["error", "passwordless", "lock.request"], {medium: "SMS", __textOnly: true})
+  swap(updateEntity, "lock", id, l.setSubmitting, false, errorMessage);
 }
 
 export function resendEmail(id) {
   swap(updateEntity, "lock", id, m.resend);
 
   const lock = read(getEntity, "lock", id);
-  const options = {email: c.email(lock), send: m.send(lock)};
+  const options = {
+    authParams: m.send(lock) === "link" ? l.login.authParams(lock).toJS() : {},
+    email: c.email(lock),
+    send: m.send(lock),
+    responseType: l.login.responseType(lock),
+    callbackURL: l.login.callbackURL(lock),
+    forceJSONP: l.login.forceJSONP(lock)
+  };
   webApi.startPasswordless(id, options, error => {
     if (error) {
       resendEmailError(id, error);
@@ -164,45 +186,60 @@ export function signIn(id) {
   const lock = read(getEntity, "lock", id);
 
   if (l.submitting(lock)) {
-    const isSMS = m.send(lock) === "sms";
     const options = {
-      connection: isSMS ? "sms" : "email",
-      username: isSMS ? c.fullPhoneNumber(lock) : c.email(lock),
-      password: c.vcode(lock),
-      sso: false
+      passcode: c.vcode(lock),
+      redirect: l.shouldRedirect(lock),
+      responseType: l.login.responseType(lock),
+      callbackURL: l.login.callbackURL(lock),
+      forceJSONP: l.login.forceJSONP(lock)
     };
-    webApi.signIn(id, options, (error, ...args) => {
-      if (error) {
-        signInError(id, error);
-      } else {
-        signInSuccess(id, ...args);
-      }
-    });
+
+    if (m.send(lock) === "sms") {
+      options.phoneNumber = c.fullPhoneNumber(lock);
+    } else {
+      options.email = c.email(lock);
+    }
+
+    webApi.signIn(
+      id,
+      Map(options).merge(l.login.authParams(lock)).toJS(),
+      (error, ...args) => error ? signInError(id, error) : signInSuccess(id, ...args)
+    );
   }
 }
 
 function signInSuccess(id, ...args) {
-  swap(updateEntity, "lock", id, lock => m.setSignedIn(l.setSubmitting(lock, false), true));
-
   const lock = read(getEntity, "lock", id);
-  l.invokeDoneCallback(lock, null, ...args);
+  const autoclose = l.ui.autoclose(lock);
+
+  if (!autoclose) {
+    swap(updateEntity, "lock", id, lock => m.setSignedIn(l.setSubmitting(lock, false), true));
+    l.invokeDoneCallback(lock, null, ...args);
+  } else {
+    closeLock(id, m.reset, lock => l.invokeDoneCallback(lock, null, ...args));
+  }
 }
 
 function signInError(id, error) {
-  swap(updateEntity, "lock", id, l.setSubmitting, false, error.description);
-
   const lock = read(getEntity, "lock", id);
+  const cred = m.send(lock) === "sms" ? "phone number" : "email";
+  const errorMessage = l.ui.t(lock, ["error", "signIn", error.error], {cred: cred, __textOnly: true}) || l.ui.t(lock, ["error", "signIn", "lock.request"], {cred: cred, __textOnly: true});
+  swap(updateEntity, "lock", id, l.setSubmitting, false, errorMessage);
+
   l.invokeDoneCallback(lock, error);
 }
 
-export function reset(id, clearCred = true) {
-  swap(updateEntity, "lock", id, m.reset, clearCred);
+export function reset(id, opts = {}) {
+  swap(updateEntity, "lock", id, m.reset, opts);
 }
 
-export function close(id) {
-  closeLock(id, m.reset);
+export function close(id, force = false) {
+  const lock = read(getEntity, "lock", id);
+  if (l.ui.closable(lock) || force) {
+    closeLock(id, m.reset);
+  }
 }
 
-export function back(id) {
-  reset(id, false);
+export function back(id, resetOpts = {}) {
+  reset(id, resetOpts);
 }

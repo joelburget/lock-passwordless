@@ -8,7 +8,7 @@ function valid(lock, field) {
 }
 
 function showInvalid(lock, cred) {
-  return lock.getIn(["cred", cred, "showInvalid"]);
+  return lock.getIn(["cred", cred, "showInvalid"], false);
 }
 
 function setShowInvalid(lock, cred, value) {
@@ -22,7 +22,7 @@ function visiblyInvalid(lock, cred) {
 // phone number
 
 export function fullPhoneNumber(lock) {
-  return `${phoneDialingCode(lock) || ""}${phoneNumber(lock) || ""}`;
+  return `${phoneDialingCode(lock) || ""}${phoneNumber(lock) || ""}`.replace(/\s+/g, '');
 }
 
 export function fullHumanPhoneNumber(m) {
@@ -47,16 +47,23 @@ export function phoneDialingCode(m) {
   return cc.dialingCode(phoneLocation(m));
 }
 
+export function phoneIsoCode(m) {
+  return cc.isoCode(phoneLocation(m));
+}
+
 export function phoneNumber(lock) {
   return lock.getIn(["cred", "phoneNumber", "number"], "");
 }
 
-export function setPhoneNumber(lock, phoneNumber) {
-  const valid = validatePhoneNumber(phoneNumber);
+export function setPhoneNumber(lock, value) {
+  const prevValue = phoneNumber(lock);
+  const prevShowInvalid = showInvalid(lock, "phoneNumber");
+  const valid = validatePhoneNumber(value);
+
   return lock.mergeIn(["cred", "phoneNumber"], Map({
-    number: phoneNumber,
+    number: value,
     valid: valid,
-    showInvalid: !!showInvalid(lock, "phoneNumber") && !valid
+    showInvalid: prevShowInvalid && prevValue === value
   }));
 }
 
@@ -83,12 +90,15 @@ export function email(lock) {
   return lock.getIn(["cred", "email", "email"], "");
 }
 
-export function setEmail(lock, email) {
-  const valid = !!validateEmail(email);
+export function setEmail(lock, value) {
+  const prevValue = email(lock);
+  const prevShowInvalid = showInvalid(lock, "email");
+  const valid = !!validateEmail(value);
+
   return lock.mergeIn(["cred", "email"], Map({
-    email: email,
+    email: value,
     valid: valid,
-    showInvalid: !!showInvalid(lock, "email") && !valid
+    showInvalid: prevShowInvalid && prevValue === value
   }));
 }
 
@@ -116,12 +126,15 @@ export function vcode(lock) {
   return lock.getIn(["cred", "vcode", "vcode"], "");
 }
 
-export function setVcode(lock, vcode) {
-  const valid = validateVcode(vcode);
+export function setVcode(lock, value) {
+  const prevValue = vcode(lock);
+  const prevShowInvalid = showInvalid(lock, "vcode");
+  const valid = validateVcode(value);
+
   return lock.mergeIn(["cred", "vcode"], Map({
-    vcode: vcode,
+    vcode: value,
     valid: valid,
-    showInvalid: !!showInvalid(lock, "vcode") && !valid
+    showInvalid: prevShowInvalid && prevValue === value
   }));
 }
 
