@@ -32817,6 +32817,7 @@ var LocationInput = (function (_React$Component) {
           value: limitedValue,
           onFocus: this.handleFocus.bind(this),
           onBlur: this.handleBlur.bind(this),
+          onKeyDown: this.handleKeyDown.bind(this),
           onClick: onClick,
           tabIndex: tabIndex }),
         _react2['default'].createElement(_iconIcon2['default'], { name: 'arrow' })
@@ -32831,6 +32832,18 @@ var LocationInput = (function (_React$Component) {
     key: 'handleBlur',
     value: function handleBlur() {
       this.setState({ focused: false });
+    }
+  }, {
+    key: 'handleKeyDown',
+    value: function handleKeyDown(e) {
+      e.preventDefault();
+      if (e.key === "ArrowDown") {
+        return this.props.onClick();
+      }
+
+      if (e.keyCode >= 65 && e.keyCode <= 90) {
+        return this.props.onClick(String.fromCharCode(e.keyCode).toLowerCase());
+      }
     }
   }]);
 
@@ -32892,19 +32905,34 @@ var LocationSelect = (function (_React$Component) {
 
     _get(Object.getPrototypeOf(LocationSelect.prototype), 'constructor', this).call(this, props);
     this.state = { filteredCountryCodes: cc.countryCodes, highlighted: null };
+    if (props.initialLocationSearchStr) {
+      this.state = this.filter(props.initialLocationSearchStr);
+    }
   }
 
   _createClass(LocationSelect, [{
     key: 'componentDidMount',
     value: function componentDidMount() {
+      var _this = this;
+
       if (!(0, _utilsMedia_utils.isSmallScreen)()) {
-        _react2['default'].findDOMNode(this.refs.input).focus();
+        setTimeout(function () {
+          var node = _react2['default'].findDOMNode(_this.refs.input);
+          node.focus();
+          if (node.setSelectionRange) {
+            var _length = node.value.length;
+            node.setSelectionRange(_length, _length);
+          } else {
+            node.value = node.value;
+          }
+        }, 300);
       }
     }
   }, {
     key: 'render',
     value: function render() {
       var _props = this.props;
+      var initialLocationSearchStr = _props.initialLocationSearchStr;
       var locationFilterInputPlaceholder = _props.locationFilterInputPlaceholder;
       var selectHandler = _props.selectHandler;
       var _state = this.state;
@@ -32923,6 +32951,7 @@ var LocationSelect = (function (_React$Component) {
             _react2['default'].createElement(_iconIcon2['default'], { name: 'location' }),
             _react2['default'].createElement('input', { ref: 'input',
               className: 'auth0-lock-input auth0-lock-input-search',
+              defaultValue: initialLocationSearchStr,
               onChange: this.handleSearchChange.bind(this),
               onKeyDown: this.handleKeyDown.bind(this),
               type: 'text',
@@ -32936,8 +32965,8 @@ var LocationSelect = (function (_React$Component) {
       );
     }
   }, {
-    key: 'handleSearchChange',
-    value: function handleSearchChange(e) {
+    key: 'filter',
+    value: function filter(str) {
       var findNewHighlighted = function findNewHighlighted(countryCodes, highlighted) {
         if (countryCodes.size === 1) {
           return countryCodes.get(0);
@@ -32946,16 +32975,21 @@ var LocationSelect = (function (_React$Component) {
         return countryCodes.includes(highlighted) ? highlighted : null;
       };
 
-      var filteredCountryCodes = cc.find(e.target.value);
+      var filteredCountryCodes = cc.find(str);
 
       var highlighted = this.state.highlighted;
 
       var newHighlighted = findNewHighlighted(filteredCountryCodes, highlighted);
 
-      this.setState({
+      return {
         filteredCountryCodes: filteredCountryCodes,
         highlighted: newHighlighted
-      });
+      };
+    }
+  }, {
+    key: 'handleSearchChange',
+    value: function handleSearchChange(e) {
+      this.setState(this.filter(e.target.value));
     }
   }, {
     key: 'handleHighlight',
@@ -33036,7 +33070,7 @@ var LocationList = (function (_React$Component2) {
   _createClass(LocationList, [{
     key: 'componentDidUpdate',
     value: function componentDidUpdate() {
-      var _this = this;
+      var _this2 = this;
 
       // NOTE: I've spent very little time on this. It works, but it surely can be
       // expressed more clearly.
@@ -33060,7 +33094,7 @@ var LocationList = (function (_React$Component2) {
             clearTimeout(this.timeout);
           }
           this.timeout = setTimeout(function () {
-            return _this.preventHighlight = false;
+            return _this2.preventHighlight = false;
           }, 100);
         }
       }
@@ -33068,7 +33102,7 @@ var LocationList = (function (_React$Component2) {
   }, {
     key: 'render',
     value: function render() {
-      var _this2 = this;
+      var _this3 = this;
 
       var _props2 = this.props;
       var countryCodes = _props2.countryCodes;
@@ -33080,7 +33114,7 @@ var LocationList = (function (_React$Component2) {
         var props = {
           location: x,
           key: cc.locationString(x).replace(/ /g, '-'),
-          highlightHandler: _this2.handleHighlight.bind(_this2),
+          highlightHandler: _this3.handleHighlight.bind(_this3),
           selectHandler: selectHandler
         };
 
@@ -36150,7 +36184,7 @@ function changePhoneNumber(id, phoneNumber) {
 
 function changePhoneLocation(id, location) {
   (0, _storeIndex.swap)(_storeIndex.updateEntity, "lock", id, function (lock) {
-    lock = m.setSelectingLocation(lock, false);
+    lock = m.closeLocationSelect(lock);
     lock = c.setPhoneLocation(lock, location);
     return lock;
   });
@@ -36173,12 +36207,12 @@ function changeVcode(id, vcode) {
   (0, _storeIndex.swap)(_storeIndex.updateEntity, "lock", id, c.setVcode, vcode);
 }
 
-function selectPhoneLocation(id) {
-  (0, _storeIndex.swap)(_storeIndex.updateEntity, "lock", id, m.setSelectingLocation, true);
+function selectPhoneLocation(id, searchStr) {
+  (0, _storeIndex.swap)(_storeIndex.updateEntity, "lock", id, m.openLocationSelect, searchStr);
 }
 
 function cancelSelectPhoneLocation(id) {
-  (0, _storeIndex.swap)(_storeIndex.updateEntity, "lock", id, m.setSelectingLocation, false);
+  (0, _storeIndex.swap)(_storeIndex.updateEntity, "lock", id, m.closeLocationSelect);
 }
 
 function requestPasswordlessEmail(id) {
@@ -36574,6 +36608,7 @@ var AskLocation = (function (_React$Component) {
     value: function render() {
       return _react2['default'].createElement(_credLocation_select2['default'], { selectHandler: this.handleSelect.bind(this),
         cancelHandler: this.handleCancel.bind(this),
+        initialLocationSearchStr: this.props.initialLocationSearchStr,
         locationFilterInputPlaceholder: this.t(["locationFilterInputPlaceholder"], { __textOnly: true }) });
     }
   }, {
@@ -36681,7 +36716,8 @@ var AskPhoneNumber = (function (_React$Component) {
     value: function render() {
       var lock = this.props.lock;
 
-      var auxiliaryPane = m.selectingLocation(lock) ? _react2['default'].createElement(_ask_location2['default'], { key: 'auxiliarypane', lock: lock }) : null;
+      var initialLocationSearchStr = m.initialLocationSearchStr(lock);
+      var auxiliaryPane = m.selectingLocation(lock) ? _react2['default'].createElement(_ask_location2['default'], { key: 'auxiliarypane', lock: lock, initialLocationSearchStr: initialLocationSearchStr }) : null;
       var terms = this.t(["footerText"]);
 
       return _react2['default'].createElement(
@@ -36720,8 +36756,8 @@ var AskPhoneNumber = (function (_React$Component) {
     }
   }, {
     key: 'handleLocationClick',
-    value: function handleLocationClick() {
-      (0, _actions.selectPhoneLocation)(l.id(this.props.lock));
+    value: function handleLocationClick(searchStr) {
+      (0, _actions.selectPhoneLocation)(l.id(this.props.lock), searchStr);
     }
   }, {
     key: 'componentWillSlideIn',
@@ -37167,7 +37203,9 @@ exports.resendAvailable = resendAvailable;
 exports.reset = reset;
 exports.send = send;
 exports.isSendLink = isSendLink;
-exports.setSelectingLocation = setSelectingLocation;
+exports.openLocationSelect = openLocationSelect;
+exports.closeLocationSelect = closeLocationSelect;
+exports.initialLocationSearchStr = initialLocationSearchStr;
 exports.selectingLocation = selectingLocation;
 exports.setPasswordlessStarted = setPasswordlessStarted;
 exports.passwordlessStarted = passwordlessStarted;
@@ -37254,8 +37292,24 @@ function isSendLink(m) {
   return send(m) === "link";
 }
 
-function setSelectingLocation(m, value) {
-  return m.set("selectingLocation", !!value);
+function openLocationSelect(m, searchStr) {
+  m = m.set("selectingLocation", true);
+  if (searchStr && typeof searchStr === "string") {
+    m = m.set("initialLocationSearchStr", searchStr);
+  }
+
+  return m;
+}
+
+function closeLocationSelect(m) {
+  m = m.remove("selectingLocation");
+  m = m.remove("initialLocationSearchStr");
+
+  return m;
+}
+
+function initialLocationSearchStr(m) {
+  return m.get("initialLocationSearchStr", "");
 }
 
 function selectingLocation(m) {
