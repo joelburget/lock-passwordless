@@ -43,7 +43,7 @@ breakpoint(point, value = 0)
   color white
   text-align center
   padding 6px 20px
-  line-height 2
+  line-height 1.6
   font-size 12px
 
   span
@@ -78,9 +78,9 @@ breakpoint(point, value = 0)
 .auth0-lock
   font-family "Avenir", sans-serif
   text-rendering optimizeLegibility
-  opacity 0
-  -webkit-transition opacity 0s 2s
-  transition opacity 0s 2s
+  // opacity 0
+  // -webkit-transition opacity 0s 2s
+  // transition opacity 0s 2s
   pointer-events none
   position fixed
   bottom 0
@@ -119,14 +119,14 @@ breakpoint(point, value = 0)
     background white
     width 300px
     opacity 0
-    -webkit-transition transform .4s, opacity .7s
+    -webkit-transition -webkit-transform .4s, opacity .7s
     transition transform .4s, opacity .7s
     -webkit-transform translateY(100%) scale(.8)
     transform translateY(100%) scale(.8)
     -webkit-transition-timing-function cubic-bezier(.3, 0, 0, 1.4)
     transition-timing-function cubic-bezier(.3, 0, 0, 1.4)
-    -webkit-transition-delay 0s
-    transition-delay 0s
+    // -webkit-transition-delay 0s
+    // transition-delay 0s
     margin 0 auto
     border-radius 5px
 
@@ -211,6 +211,7 @@ breakpoint(point, value = 0)
       border-top-left-radius 5px
       border-top-right-radius 5px
       -webkit-filter blur(40px) grayscale(1)
+      filter blur(40px) grayscale(1)
       -webkit-backdrop-filter: blur(0);
       background-color #fff
       background-position center
@@ -224,6 +225,7 @@ breakpoint(point, value = 0)
 
       &.auth0-lock-no-grayscale
         -webkit-filter blur(100px)
+        filter blur(100px)
         -webkit-backdrop-filter: blur(0);
         background-position center
         background-size 500px
@@ -279,7 +281,10 @@ breakpoint(point, value = 0)
       margin-bottom 20px
       color #666
 
-      a.auth0-lock-did-not-receive-code-link
+    .auth0-lock-did-not-receive-code
+      margin 0
+
+      .auth0-lock-did-not-receive-code-link
         font-size 11px
         font-weight 600
         color #333332
@@ -386,12 +391,11 @@ breakpoint(point, value = 0)
     border 0
     padding 14px
     display block
+    -webkit-box-sizing border-box
     box-sizing border-box
     width 100%
     overflow hidden
     border-radius 0 0 5px 5px
-    // -webkit-transition background .2s ease-in-out
-    // transition background .2s ease-in-out
 
     span
       display inline-block
@@ -503,9 +507,9 @@ breakpoint(point, value = 0)
       pointer-events none
 
     .auth0-lock-submit
-      // background #eee
-      // -webkit-transition background .7s ease
-      // transition background .7s ease
+      background-color #eee!important
+      -webkit-transition background .5s ease
+      transition background .5s ease
       cursor initial
       pointer-events none
 
@@ -552,17 +556,17 @@ breakpoint(point, value = 0)
       transform translate(-50%,-50%)
       position absolute
 
-    &.slide-enter
-      -webkit-transform scale(.8)
-      transform scale(.8)
-      opacity 0
-      -webkit-transition opacity .3s ease-out, transform .3s ease-out
-      transition opacity .3s ease-out, transform .3s ease-out
+    // &.slide-enter
+    //   -webkit-transform scale(.8)
+    //   transform scale(.8)
+    //   opacity 0
+    //   -webkit-transition opacity .3s ease-out, transform .3s ease-out
+    //   transition opacity .3s ease-out, transform .3s ease-out
 
-    &.slide-enter-active
-      -webkit-transform scale(1)
-      transform scale(1)
-      opacity 1
+    // &.slide-enter-active
+    //   -webkit-transform scale(1)
+    //   transform scale(1)
+    //   opacity 1
 
     p
       margin-bottom 6px
@@ -577,7 +581,7 @@ breakpoint(point, value = 0)
         margin-bottom -4px
         margin-left 0px
         display inline-block
-        -webkit-transition transform 1s ease
+        -webkit-transition -webkit-transform 1s ease
         transition transform 1s ease
         -webkit-transform rotate(120deg)
         transform rotate(120deg)
@@ -640,7 +644,7 @@ breakpoint(point, value = 0)
   // Lock badge bottom link
 
   .auth0-lock-badge-bottom
-    -webkit-transition transform .5s ease 1s, opacity .2s ease 0s
+    -webkit-transition -webkit-transform .5s ease 1s, opacity .2s ease 0s
     transition transform .5s ease 1s, opacity .2s ease 0s
     -webkit-transform translateY(-200%) scale(.8)
     transform translateY(-200%) scale(.8)
@@ -671,8 +675,9 @@ breakpoint(point, value = 0)
   &.auth0-lock-opened
     opacity 1
     pointer-events auto
-    -webkit-transition-delay 0s
-    transition-delay 0s
+    // -webkit-transition-delay 0s
+    // transition-delay 0s
+    z-index 1
 
     //mobile view
     @media screen and (max-width: 480px)
@@ -705,7 +710,7 @@ breakpoint(point, value = 0)
       opacity 1
       -webkit-transform translateY(0%) scale(1)
       transform translateY(0%) scale(1)
-      -webkit-transition transform .6s, opacity .6s
+      -webkit-transition -webkit-transform .6s, opacity .6s
       transition transform .6s, opacity .6s
       -webkit-transition-delay .5s
       transition-delay .5s
@@ -750,12 +755,12 @@ breakpoint(point, value = 0)
         border-radius 0
 
     .auth0-lock-badge-bottom
-      -webkit-transform translateY(0%)  scale(1)
-      transform translateY(0%)  scale(1)
-      -webkit-transition transform 1.2s ease 1s, opacity 1.2s ease 1s
-      transition transform 1.2s ease 1s, opacity 1.2s ease 1s
-      -webkit-transition-delay 0
-      transition-delay 0
+      -webkit-transform translateY(0%) scale(1)
+      transform translateY(0%) scale(1)
+      -webkit-transition -webkit-transform 1.2s ease, opacity 1.2s ease
+      transition transform 1.2s ease, opacity 1.2s ease
+      -webkit-transition-delay 1s
+      transition-delay 1s
       opacity 1
 
       //mobile view
@@ -774,10 +779,12 @@ breakpoint(point, value = 0)
   &.auth0-lock-opened-in-frame
     opacity 1
     pointer-events auto
-    -webkit-transition-delay 0s
-    transition-delay 0s
+    // -webkit-transition-delay 0s
+    // transition-delay 0s
     position relative
     width auto
+    margin-left auto
+    margin-right auto
 
     .auth0-lock-header-bg .auth0-lock-header-bg-blur
       opacity .4
@@ -790,7 +797,7 @@ breakpoint(point, value = 0)
       opacity 1
       -webkit-transform translateY(0%) scale(1)
       transform translateY(0%) scale(1)
-      -webkit-transition transform .6s, opacity .6s
+      -webkit-transition -webkit-transform .6s, opacity .6s
       transition transform .6s, opacity .6s
       -webkit-transition-delay .5s
       transition-delay .5s
@@ -799,7 +806,7 @@ breakpoint(point, value = 0)
     .auth0-lock-badge-bottom
       -webkit-transform translateY(0%)  scale(1)
       transform translateY(0%)  scale(1)
-      -webkit-transition transform 1.2s ease 1s, opacity 1.2s ease 1s
+      -webkit-transition -webkit-transform 1.2s ease 1s, opacity 1.2s ease 1s
       transition transform 1.2s ease 1s, opacity 1.2s ease 1s
       opacity 1
 
