@@ -13,7 +13,7 @@ import styles from '../css/index.css';
 // import transitions from '../css/transitions.css';
 
 // telemetry
-import version from 'package.version';
+import { version } from '../package';
 import Auth0 from 'auth0-js';
 
 export default class Auth0LockPasswordless {
